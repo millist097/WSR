@@ -1,7 +1,19 @@
 enum launchStatus { PREBURN, BURN, POSTBURN, APOGEE, DESCENT, 
 LANDED};
 
-
+/* ***
+ *  Used to  generate sudo random numbers
+ *  sequence length: 65535
+ *  test case
+ *  uint16_t start_state = 0xAEE35;
+ *  
+ */
+unsigned lsrl_fun(uint16_t lfsr){
+  uint16_t bit;
+  bit = ((lfsr >>0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5) );
+  lfsr = (lfsr >> 1) | (bit << 15 );
+  return lfsr;
+}
 
 /* Bit Operation macros*/
 #define sbi(b,n)( (b) |= (1<<(n)) )

@@ -186,7 +186,7 @@ void setup() {
   //Serial setup for debugging
   Serial.begin(115200);
 
-  delay(100);
+  delay(1000);
   Serial.println("System Ready");
   errorLog.println("STATUS: System Reday");
   errorLog.println("STATUS: System waiting for launch Detection");
@@ -232,7 +232,7 @@ void loop() {
     
   }
 
-
+  
 
   
 
@@ -249,7 +249,7 @@ void loop() {
           temp++;
        }
     strcat(buf,"\n");
-   
+   Serial.println("test");
     while(buf[bufCount] !=NULL){
       bufCount++;
     }

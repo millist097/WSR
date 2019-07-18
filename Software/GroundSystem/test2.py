@@ -10,7 +10,7 @@ import random
 class App:
 	def __init__(self, master):
 
-		self.arduinoData = serial.Serial('/dev/ttyACM0', 9600)#115200)
+		self.arduinoData = serial.Serial('/dev/ttyACM10', 9600)#115200)
 
 		frame = Tkinter.Frame(master)
 
