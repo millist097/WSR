@@ -10,9 +10,8 @@ import random
 class App:
 	def __init__(self, master):
 
-		self.arduinoData = serial.Serial('/dev/ttyACM10', 9600)#115200)
+		self.arduinoData = serial.Serial('/dev/ttyACM0', 9600)#115200)
 
-		frame = Tkinter.Frame(master)
 
 		self.running = False
 		self.ani = None
@@ -36,7 +35,6 @@ class App:
 		self.canvas = FigureCanvasTkAgg(self.fig,master=master)
 		self.canvas.draw()
 		self.canvas.get_tk_widget().grid(row=0, column=4, padx=20, pady=20)
-		frame.grid(row=0, column=0, padx=20, pady=20)
 
 	def getData(self):
 		if self.ani is None:
