@@ -100,50 +100,27 @@ class GuiPart:
 		#frame = Frame(master,width=30, height=150)
 
 		
-		self.fig = plt.Figure()
-		self.ax1 = self.fig.add_subplot(111)
-		self.line0, = self.ax1.plot([], [], lw=2)
-
-		self.canvas = FigureCanvasTkAgg(self.fig,master=master)
-		self.canvas.draw()
-		self.canvas.get_tk_widget().place(x=325,y=10,height=300,width=300)
-		#frame.place(x=200,y=10)
-		
 
 				
 
-		self.ani = animation.FuncAnimation(
-					self.fig,
-					self.update_graph,
-					interval=1,
-					repeat=True)
 	
-	def update_graph(self, i, ):
-		if self.ser.is_open:
-			self.line0.set_data(self.xdata, self.ydata)
-			if  self.count >2 and len(self.xdata) < 49:
-				self.ax1.set_ylim(min(self.ydata)-1, max(self.ydata) + 1)
-				self.ax1.set_xlim(min(self.xdata)-1, self.count+1)
-			else:
-				self.ax1.set_ylim(min(self.ydata)-1, max(self.ydata) + 1)
-				self.ax1.set_ylim(self.xdata[len(self.xdata)-50], self.count+1)
-			
-				
+
 	def processIncoming(self):
 		"""Handle all messages currently in the queue, if any."""
 		while self.receivedQueue.qsize(  )>1:
 			try:
 				msg = self.receivedQueue.get(0)
-				# Check contents of message and do whatever is needed. As a
-				# simple test, print it (in real life, you would
-				# suitably update the GUI's display in a richer fashion).
-				self.txt.insert(INSERT, msg)
-				self.txt.insert(INSERT, '\n')
-				self.txt.see("end")
-				self.xdata.append(int(msg[4]))
-				self.ydata.append(int(msg[1]))
-				self.count = int(msg[4])
-				#print(msg)
+				if msg[0] == 'ECHO':
+					self.txt.insert(INSERT,msg)
+					self.txt.insert(INSERT, '\n')
+				elif msg[0] == 'DATA':
+					self.txt.insert(INSERT, msg)
+					self.txt.insert(INSERT, '\n')
+					self.txt.see("end")
+					self.xdata.append(int(msg[4]))
+					self.ydata.append(int(msg[1]))
+					self.count = int(msg[4])
+				
 			except Queue.Empty:
 				# just on general principles, although we don't
 				# expect this branch to be taken in this case
@@ -202,10 +179,10 @@ class ThreadedClient:
 		to yield control pretty regularly, by select or otherwise.
 		"""
 		while self.running:
-
+			time.sleep(.15)
 			if self.ser.is_open:
 				#print(self.ser.port)
-				time.sleep(.010)
+				
 				msg = self.ser.readline()
 				msg = msg.strip()
 				stringMsg = msg.decode("utf-8")

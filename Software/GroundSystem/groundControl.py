@@ -57,7 +57,7 @@ class GuiPart:
 		def closePort():
 			if self.ser.is_open:
 				self.ser.close()
-				time.sleep(.15)
+				time.sleep(.3)
 				self.txt.insert(INSERT,'Port closed\n')
 			else:
 				self.txt.insert(INSERT,'No Port is Open\n')
@@ -90,7 +90,7 @@ class GuiPart:
 		
 		self.linAccel_y_position = 340
 		accelMain_lbl = Label(master, text = 'Linear Acceleration Raw Data')
-		accelMain_lbl.place(x=10, y= self.linAccel_y_position-20)
+		accelMain_lbl.place(x=10, y= self.linAccel_y_position-16)
 		
 		accel_x_lbl = Label( master, text='X:')
 		accel_x_lbl.place(x=10, y=self.linAccel_y_position+4)
@@ -110,7 +110,7 @@ class GuiPart:
 		
 		self.vel_y_position = 380
 		velMain_lbl = Label(master, text = 'Velocity Raw Data')
-		velMain_lbl.place(x=10, y= self.vel_y_position-20)
+		velMain_lbl.place(x=10, y= self.vel_y_position-16)
 		
 		vel_x_lbl = Label( master, text='X:')
 		vel_x_lbl.place(x=10, y=self.vel_y_position+4)
@@ -128,23 +128,23 @@ class GuiPart:
 		vel_z_txt.place(x=175,y=self.vel_y_position)
 		
 		self.gyro_y_positon = 420
-		velMain_lbl = Label(master, text = 'Gyro Raw Data')
-		velMain_lbl.place(x=10, y= self.gyro_y_positon-20)
+		gyroMain_lbl = Label(master, text = 'Gyro Raw Data')
+		gyroMain_lbl.place(x=10, y= self.gyro_y_positon-16)
 		
-		vel_x_lbl = Label( master, text='X:')
-		vel_x_lbl.place(x=10, y=self.gyro_y_positon+4)
-		vel_x_txt = Text(master, height=1,width = 7)
-		vel_x_txt.place(x = 25, y=self.gyro_y_positon)
+		gyro_x_lbl = Label( master, text='X:')
+		gyro_x_lbl.place(x=10, y=self.gyro_y_positon+4)
+		gyro_x_txt = Text(master, height=1,width = 7)
+		gyro_x_txt.place(x = 25, y=self.gyro_y_positon)
 		
-		vel_y_lbl = Label(master, text='Y:')
-		vel_y_lbl.place(x=85, y=self.gyro_y_positon+4)
-		vel_y_txt = Text(master, height=1,width=7)
-		vel_y_txt.place(x=100,y=self.gyro_y_positon)
+		gyro_y_lbl = Label(master, text='Y:')
+		gyro_y_lbl.place(x=85, y=self.gyro_y_positon+4)
+		gyro_y_txt = Text(master, height=1,width=7)
+		gyro_y_txt.place(x=100,y=self.gyro_y_positon)
 		
-		vel_z_lbl = Label(master, text='Z:')
-		vel_z_lbl.place(x=160,y=self.gyro_y_positon+4)
-		vel_z_txt = Text(master,height=1, width=7)
-		vel_z_txt.place(x=175,y=self.gyro_y_positon)
+		gyro_z_lbl = Label(master, text='Z:')
+		gyro_z_lbl.place(x=160,y=self.gyro_y_positon+4)
+		gyro_z_txt = Text(master,height=1, width=7)
+		gyro_z_txt.place(x=175,y=self.gyro_y_positon)
 		
 		def on_closing():
 			if messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -165,19 +165,11 @@ class GuiPart:
 		self.canvas = FigureCanvasTkAgg(self.fig,master=master)
 		self.canvas.draw()
 		self.canvas.get_tk_widget().place(x=325,y=10,height=300,width=300)
-		#frame.place(x=200,y=10)
-		
 
-				
-
-		self.ani = animation.FuncAnimation(
-					self.fig,
-					self.update_graph,
-					interval=1,
-					repeat=True)
+		self.ani = animation.FuncAnimation(	self.fig,self.update_graph,interval=1,repeat=True)
 	
 	def update_graph(self, i, ):
-		if self.ser.is_open:
+		if self.ser.is_open and len(self.xdata)>0 and len(self.ydata)>0:
 			self.line0.set_data(self.xdata, self.ydata)
 			if  self.count >2 and len(self.xdata) < 49:
 				self.ax1.set_ylim(min(self.ydata)-1, max(self.ydata) + 1)
@@ -185,22 +177,25 @@ class GuiPart:
 			else:
 				self.ax1.set_ylim(min(self.ydata)-1, max(self.ydata) + 1)
 				self.ax1.set_ylim(self.xdata[len(self.xdata)-50], self.count+1)
-		#self.master.update_idletasks() 
+		
 				
 	def processIncoming(self):
 		"""Handle all messages currently in the queue, if any."""
 		while self.receivedQueue.qsize(  )>1:
 			try:
 				msg = self.receivedQueue.get(0)
-				# Check contents of message and do whatever is needed. As a
-				# simple test, print it (in real life, you would
-				# suitably update the GUI's display in a richer fashion).
-				self.txt.insert(INSERT, msg)
-				self.txt.insert(INSERT, '\n')
-				self.txt.see("end")
-				self.xdata.append(int(msg[4]))
-				self.ydata.append(int(msg[1]))
-				self.count = int(msg[4])
+				if msg[0] == 'ECHO':
+					self.txt.insert(INSERT,msg)
+					self.txt.insert(INSERT, '\n')
+				elif msg[0] == 'DATA':
+					self.txt.insert(INSERT, msg)
+					self.txt.insert(INSERT, '\n')
+					self.txt.see("end")
+					self.xdata.append(int(msg[4]))
+					self.ydata.append(int(msg[1]))
+					self.count = int(msg[4])
+				
+					
 				#print(msg)
 			except Queue.Empty:
 				# just on general principles, although we don't
@@ -261,10 +256,10 @@ class ThreadedClient:
 		to yield control pretty regularly, by select or otherwise.
 		"""
 		while self.running:
-
+			time.sleep(.150)
 			if self.ser.is_open:
 				#print(self.ser.port)
-				time.sleep(.010)
+				
 				msg = self.ser.readline()
 				msg = msg.strip()
 				stringMsg = msg.decode("utf-8")

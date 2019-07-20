@@ -240,8 +240,6 @@ void loop() {
     strcpy(buf,string2char(""));
     temp = 0;
     bufCount = 0;
-	  // data order/structure
-	  //accel{x,y,z},mag{x,y,z},Gyro{x,y,z},euler{x,y,z}
     for( int i = 0; i < 4; i++)
        for( int j = 0; j <3; j++){
           data[i].fval[j] = event[i].data[j];
