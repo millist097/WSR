@@ -9,6 +9,8 @@ import serial.tools.list_ports
 import threading
 import time
 import random
+from scipy import integrate
+import numpy as np
 import queue as Queue
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -21,8 +23,17 @@ class GuiPart:
 	def __init__(self, master, receivedQueue, sendQueue, serialIn, endCommand):
 		self.receivedQueue = receivedQueue
 		# Set up the GUI
-		self.xdata = []
-		self.ydata = []
+		self.accel_data_X = []
+		self.accel_data_Y = []
+		self.accel_data_Z = []
+		self.gyro_data = []
+		self.mag_data = []
+		self.euler_data = []
+		self.vel_data_X = [0]
+		self.vel_data_Y = [0]
+		self.vel_data_Z = [0]
+		self.timeStamp = []
+		
 		self.ser = serialIn
 		self.count = 0
 		
@@ -157,28 +168,84 @@ class GuiPart:
 
 		#frame = Frame(master,width=30, height=150)
 
+		self.graphWidth = 450
+		self.graphHeight = 275
+		self.graphSide = 325
 		
-		self.fig = plt.Figure()
-		self.ax1 = self.fig.add_subplot(111)
-		self.line0, = self.ax1.plot([], [], lw=2)
-
-		self.canvas = FigureCanvasTkAgg(self.fig,master=master)
-		self.canvas.draw()
-		self.canvas.get_tk_widget().place(x=325,y=10,height=300,width=300)
-
-		self.ani = animation.FuncAnimation(	self.fig,self.update_graph,interval=1,repeat=True)
+		self.fig_accel = plt.Figure()
+		self.ax1 = self.fig_accel.add_subplot(111)
+		self.ax1.grid()
+		self.ax1.set_title('Acceleration')
+		self.ax1.set_xlabel('timeStamp')
+		self.ax1.set_ylabel('[m/s/s]')
+		self.fig_accel.subplots_adjust(bottom=0.17)
+		self.accel_line0, = self.ax1.plot([], [], lw=1, Label='X-axis')
+		self.accel_line1, = self.ax1.plot([], [], lw=1, Label='Y-axis')
+		self.accel_line2, = self.ax1.plot([], [], lw=1, Label='Z-axis')
+		self.ax1.legend(loc='upper right')
+		self.accel_canvas = FigureCanvasTkAgg(self.fig_accel,master=master)
+		self.accel_canvas.draw()
+		self.accel_canvas.get_tk_widget().place(x=self.graphSide,y=10,height=self.graphHeight,width=self.graphWidth)
+		self.ani_accel = animation.FuncAnimation(	self.fig_accel,self.update_accel_graph,interval=1,repeat=True)
 	
-	def update_graph(self, i, ):
-		if self.ser.is_open and len(self.xdata)>0 and len(self.ydata)>0:
-			self.line0.set_data(self.xdata, self.ydata)
-			if  self.count >2 and len(self.xdata) < 49:
-				self.ax1.set_ylim(min(self.ydata)-1, max(self.ydata) + 1)
-				self.ax1.set_xlim(min(self.xdata)-1, self.count+1)
-			else:
-				self.ax1.set_ylim(min(self.ydata)-1, max(self.ydata) + 1)
-				self.ax1.set_ylim(self.xdata[len(self.xdata)-50], self.count+1)
+		self.fig_vel = plt.Figure()
+		self.ax2 = self.fig_vel.add_subplot(111)
+		self.ax2.grid()
+		self.ax2.set_title('Velocity')
+		self.ax2.set_xlabel('Time [s]')
+		self.ax2.set_ylabel('[m/s]')
+		self.fig_vel.subplots_adjust(bottom=.17)
+		self.vel_line0, = self.ax2.plot([], [], lw=1, Label='X-axis')
+		self.vel_line1, = self.ax2.plot([], [], lw=1, Label='Y-axis')
+		self.vel_line2, = self.ax2.plot([], [], lw=1, Label='Z-axis')
+		self.ax2.legend(loc='upper right')
+		self.velocity_canvas = FigureCanvasTkAgg(self.fig_vel,master=master)
+		self.velocity_canvas.draw()
+		self.velocity_canvas.get_tk_widget().place(x=self.graphSide, y =20+self.graphHeight, height=self.graphHeight, width=self.graphWidth)
+		self.ani_velocity = animation.FuncAnimation( self.fig_vel, self.update_velocity_graph, interval=1, repeat=True)
 		
+	def update_accel_graph(self, i ):
+		if self.ser.is_open and len(self.timeStamp)>0:					
 				
+			if  len(self.timeStamp) >2 and len(self.timeStamp) < 49:
+				self.accel_line0.set_data(self.timeStamp, self.accel_data_X)
+				self.accel_line1.set_data(self.timeStamp, self.accel_data_Y)
+				self.accel_line2.set_data(self.timeStamp, self.accel_data_Z)
+				accelMin = min([min(self.accel_data_X), min(self.accel_data_Y), min(self.accel_data_Z)])
+				accelMax = max([max(self.accel_data_X), max(self.accel_data_Y),max(self.accel_data_Z)])
+				self.ax1.set_ylim(accelMin-1, accelMax + 1)
+				self.ax1.set_xlim(min(self.timeStamp)-1, max(self.timeStamp)+1)
+			else:
+				self.accel_line0.set_data(self.timeStamp[-50:], self.accel_data_X[-50:])
+				self.accel_line1.set_data(self.timeStamp[-50:], self.accel_data_Y[-50:])
+				self.accel_line2.set_data(self.timeStamp[-50:], self.accel_data_Z[-50:])
+				accelMin = min([min(self.accel_data_X[-50:]), min(self.accel_data_Y[-50:]),min(self.accel_data_Z[-50:])])
+				accelMax = max([max(self.accel_data_X[-50:]), max(self.accel_data_Y[-50:]),max(self.accel_data_Z[-50:])])
+				self.ax1.set_ylim(accelMin-1, accelMax+ 1)
+				self.ax1.set_xlim(min(self.timeStamp[-50:])-1, max(self.timeStamp[-50:])+1)
+			
+	def update_velocity_graph(self, i):
+		if self.ser.is_open and len(self.timeStamp)>0:
+
+			if   len(self.timeStamp) < 49:
+				self.vel_line0.set_data(self.timeStamp, self.vel_data_X)
+				self.vel_line1.set_data(self.timeStamp, self.vel_data_Y)
+				self.vel_line2.set_data(self.timeStamp, self.vel_data_Z)
+
+				velMin = min([min(self.vel_data_X), min(self.vel_data_Y), min(self.vel_data_Z)])
+				velMax = max([max(self.vel_data_X), max(self.vel_data_Y), max(self.vel_data_Z)])
+				self.ax2.set_ylim(velMin-1, velMax + 1)
+				self.ax2.set_xlim(min(self.timeStamp)-1, max(self.timeStamp)+1)
+			else:
+				self.vel_line0.set_data(self.timeStamp[-50:], self.vel_data_X[-50:])
+				self.vel_line1.set_data(self.timeStamp[-50:], self.vel_data_Y[-50:])
+				self.vel_line2.set_data(self.timeStamp[-50:], self.vel_data_Z[-50:])
+				velMin = min([min(self.vel_data_X[-50:]), min(self.vel_data_Y[-50:]),min(self.vel_data_Z[-50:])])
+				velMax = max([max(self.vel_data_X[-50:]), max(self.vel_data_Y[-50:]),max(self.vel_data_Z[-50:])])
+				self.ax2.set_ylim(velMin-1, velMax+ 1)
+				self.ax2.set_xlim(min(self.timeStamp[-50:])-1, max(self.timeStamp[-50:])+1)		
+					
+					
 	def processIncoming(self):
 		"""Handle all messages currently in the queue, if any."""
 		while self.receivedQueue.qsize(  )>1:
@@ -191,9 +258,25 @@ class GuiPart:
 					self.txt.insert(INSERT, msg)
 					self.txt.insert(INSERT, '\n')
 					self.txt.see("end")
-					self.xdata.append(int(msg[4]))
-					self.ydata.append(int(msg[1]))
-					self.count = int(msg[4])
+					self.accel_data_X.append(float(msg[1]))
+					self.accel_data_Y.append(float(msg[2]))
+					self.accel_data_Z.append(float(msg[3]))
+					
+					self.mag_data.append([float(msg[4]), float(msg[5]), float(msg[6])])
+					self.gyro_data.append([float(msg[7]), float(msg[8]), float(msg[9])])
+					self.euler_data.append([float(msg[10]), float(msg[11]), float(msg[12])])
+					self.timeStamp.append(int(msg[13])/1000.0)
+					self.count = int(msg[14])
+					
+					if len(self.timeStamp)>1:
+						dt = self.timeStamp[-1]-self.timeStamp[-2]
+						self.vel_data_X.append((dt*((self.accel_data_X[-1]+self.accel_data_X[-2])/2.0))+self.vel_data_X[-1])
+						self.vel_data_Y.append((dt*((self.accel_data_Y[-1]+self.accel_data_Y[-2])/2.0))+self.vel_data_Y[-1])
+						self.vel_data_Z.append((dt*((self.accel_data_Z[-1]+self.accel_data_Z[-2])/2.0))+self.vel_data_Z[-1])
+					
+				elif msg[0] == 'STATE':
+					self.txt.insert(INSERT,msg)
+					self.txt.insert(INSERT, '\n')
 				
 					
 				#print(msg)
@@ -279,8 +362,8 @@ class ThreadedClient:
 
 rand = random.Random(  )
 window = Tk()
-window.title("Serial port Interface")
-window.geometry('750x450')
+window.title("Rocket Command")
+window.geometry('950x700')
 
 client = ThreadedClient(window)
 window.mainloop(  )
