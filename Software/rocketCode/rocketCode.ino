@@ -121,7 +121,7 @@ void setup() {
   pinMode(LED,OUTPUT);
   digitalWrite(RFM95_RST,HIGH);
   digitalWrite(LED,LOW);
-  delay(50);
+  delay(150);
   if(!SD.begin(chipSelect)){
     while(1){
       digitalWrite(LED,HIGH);
@@ -131,6 +131,7 @@ void setup() {
         digitalWrite(LED,HIGH);
         delay(3*BLINKDELAY);
         digitalWrite(LED,LOW);
+      Serial.println("Fuck the SD Card");  
       delay(1000);
    }// end fail case
   }
@@ -143,6 +144,7 @@ void setup() {
         digitalWrite(LED,LOW);
         
       }
+      
       delay(1000);
     }
   }// end fail case
@@ -192,7 +194,8 @@ void setup() {
   errorLog.println("STATUS: System waiting for launch Detection");
   
   errorLog.flush(); // save writen data to the card
-  dataLog = SD.open(dataFile, FILE_WRITE);
+  errorLog.close();
+  //dataLog = SD.open(dataFile, FILE_WRITE);
 
 }// end of setup
 
@@ -232,11 +235,18 @@ void loop() {
     
   }
 
-  
+  if(rf95.available()){
+    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+    uint8_t len = sizeof(buf);
+    if(rf95.recv(buf)){
+      if(buf[0] = selfID
+    }
+  }
 
   
 
   if(flag_is_set(FLAG_DATA_AVAILABLE)){
+    dataLog = SD.open(dataFile, FILE_WRITE);
     strcpy(buf,string2char(""));
     temp = 0;
     bufCount = 0;
@@ -268,6 +278,8 @@ void loop() {
       set_flag(FLAG_TRANSMIT_DATA);
       lastTime_transmitEvent = millis();
     }
+    clear_flag(FLAG_DATA_AVAILABLE);
+    dataLog.close();
   }
 
   if(flag_is_set(FLAG_TRANSMIT_DATA) ){
@@ -279,11 +291,11 @@ void loop() {
     
     digitalWrite(LED,LOW);
     Serial.println("Data Sent");
-    
+    clear_flag(FLAG_TRANSMIT_DATA);
 //    delay(1000); // Used for debug
   }
 
 
-  Serial.println("~~~~~~~~~~~~~~~~~");
+ 
   
 }
