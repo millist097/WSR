@@ -25,7 +25,7 @@ unsigned lsrl_fun(uint16_t lfsr){
 
 volatile uint16_t flags;
 volatile uint16_t commands;
-volatile uint16_t state
+volatile uint16_t state;
 /* Bottom half are activity flags
  *  top half are command flags
  */

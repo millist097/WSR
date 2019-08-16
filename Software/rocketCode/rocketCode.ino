@@ -1,3 +1,5 @@
+#include <RTClib.h>
+
 /* Project: MRL 2019 Flight Computer
  * Board: M0 Feather with RFM9* Transmitter
  * Wing: DataLogger wing from arduino
@@ -13,7 +15,7 @@
 
 //Librarys to include
 #include <SPI.h>
-#include<SD.h>
+#include <SD.h>
 #include <RH_RF95.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
@@ -81,7 +83,7 @@ bool rfm95_Setup(){
 }
 
 
-launchStatus r_status = PREBURN;
+
 messageType currentMessage = STANDBY;
 
 
@@ -119,9 +121,11 @@ char* string2char(String command){
 void setup() { 
   /* Setup for RFM95 */
   pinMode(LED,OUTPUT);
+  digitalWrite(RFM95_CS,HIGH);
   digitalWrite(RFM95_RST,HIGH);
   digitalWrite(LED,LOW);
-  delay(150);
+  delay(300);
+  
   if(!SD.begin(chipSelect)){
     while(1){
       digitalWrite(LED,HIGH);
@@ -235,13 +239,6 @@ void loop() {
     
   }
 
-  if(rf95.available()){
-    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-    uint8_t len = sizeof(buf);
-    if(rf95.recv(buf)){
-      if(buf[0] = selfID
-    }
-  }
 
   
 
@@ -261,10 +258,11 @@ void loop() {
           temp++;
        }
     strcat(buf,"\n");
-   Serial.println("test");
+   Serial.println("test1");
     while(buf[bufCount] !=NULL){
       bufCount++;
     }
+    digitalWrite(RFM95_RST, HIGH);
     dataLog.write(buf,bufCount);
     //dataLog.write('!');
     dataLog.write('\n');
@@ -273,13 +271,14 @@ void loop() {
     Serial.print("Data: ");
     Serial.print(buf);
     Serial.print("count: ");Serial.println(bufCount);
-    dataLog.flush();
+    dataLog.flush();dataLog.close();
+    digitalWrite(RFM95_RST, LOW);
     if(currentTime -lastTime_transmitEvent >= 500){
       set_flag(FLAG_TRANSMIT_DATA);
       lastTime_transmitEvent = millis();
     }
     clear_flag(FLAG_DATA_AVAILABLE);
-    dataLog.close();
+    
   }
 
   if(flag_is_set(FLAG_TRANSMIT_DATA) ){
@@ -295,7 +294,4 @@ void loop() {
 //    delay(1000); // Used for debug
   }
 
-
- 
-  
 }

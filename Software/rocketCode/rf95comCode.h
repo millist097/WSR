@@ -4,7 +4,7 @@ module for rocket telemertry system
 **/
 
 /* messageType used to identify a message*/
-enum messageType {  STATE, DATA, COMMAND, TEST, ERROR, ACKNOWLEDGE };
+enum messageType {  STATE, DATA, COMMAND, TEST, ERROR, ACKNOWLEDGE, STANDBY };
 enum commandType {SENDDATA, RESETSYSTEM,READY_FOR_LAUNCH,STATUS,STANDDOWN};
 /* Creates a array of uint8_t that combines the destination
    and senders address with the data. it also appends a CRC value
@@ -66,69 +66,69 @@ void sendError(RH_RF95 &rf95, uint8_t selfId, uint8_t receiverId){
   rf95.send(package,4);
 }
 
-void processRecivedMessage(RH_RF95 &rf95, uint8_t selfId){
-    if (rf95.available()){
-      Serial.println("Message Recived");
-      // Should be a message for us now
-      uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-      uint8_t len = sizeof(buf);
-      
-      if (rf95.recv(buf, &len)){
-        digitalWrite(LED, HIGH);
-        //check to see if it is for self
-        if( buf[0] == selfId){ // if for me
-          //check CRC
-          byte crc = 0;
-          for( int i = 0; i<len-1; i++){
-            crc ^= buf[i];
-          }
-          // check the crc
-          if( buf[len-1] == crc){
-            
-            // if tree to determine message type and how to handle it
-            if(buf[2]==(unit8_t)DATA){
-              sendAcknoledge(&rf95,myAddress, buf[1]);
-              for( int i = 0; i < buf[3]; i++){
-                dataSetRecived[i] = buf[4+i];
-              }
-              set_flag(FLAG_DATA_RECIVED);
-            }else if( buf[2] == (unit8_t)COMMAND{
-              uint8_t command = buf[3];
-              if(command == SENDDATA){
-                set_flag(CMD_SEND_DATA);
-              }else if( command == RESETSYSTEM ){
-                set_flag(CMD_RESET); 
-              }else if( command == READY_FOR_LAUNCH){
-                set_flag(CMD_READY_LAUNCH);
-              }else if( command == STATUS){
-                set_flag( CMD_STATUS );
-              }else if( command == ,STANDDOWN){
-                set_flag( CMD_STAND_DOWN );
-              }else{
-                Serial.println("Invalid message recived");
-              }
-              
-            }else if( buf[2] == (unit8_t)STATE{
-              if( buf[3] == -1){
-                set_flag(
-              }
-            }else if( buf[2] == (unit8_t)TEST{
-              
-            }else if( buf[2] == (uint8_t)ERROR{
-              
-            }else if( buf[2] == (uint8_t)ACKNOWLEDGE{
-              
-            }
-           
-            Serial.println("Aknowledgement Sent");
-          }else{
-            sendError(rf95, myAddress, reciverAddress);
-            Serial.println("Error Sent");
-          }
-          digitalWrite(LED, LOW);
-        }
-      }else{
-        Serial.println("No message.");
-      }  
-  }// Message Recived --end protocal
-}
+//void processRecivedMessage(RH_RF95 &rf95, uint8_t selfId){
+//    if (rf95.available()){
+//      Serial.println("Message Recived");
+//      // Should be a message for us now
+//      uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+//      uint8_t len = sizeof(buf);
+//      
+//      if (rf95.recv(buf, &len)){
+//        
+//        //check to see if it is for self
+//        if( buf[0] == selfId){ // if for me
+//          //check CRC
+//          byte crc = 0;
+//          for( int i = 0; i<len-1; i++){
+//            crc ^= buf[i];
+//          }
+//          // check the crc
+//          if( buf[len-1] == crc){
+//            
+//            // if tree to determine message type and how to handle it
+//            if(buf[2]==(uint8_t)DATA){
+//              //sendAcknoledge(&rf95,selfId, buf[1]);
+//              for( int i = 0; i < buf[3]; i++){
+//                dataSetRecived[i] = buf[4+i];
+//              }
+//              set_flag(FLAG_MESSAGE_RECIVED);
+//            }else if( buf[2] == (unit8_t)COMMAND{
+//              uint8_t command = buf[3];
+//              if(command == SENDDATA){
+//                set_flag(CMD_SEND_DATA);
+//              }else if( command == RESETSYSTEM ){
+//                set_flag(CMD_RESET); 
+//              }else if( command == READY_FOR_LAUNCH){
+//                set_flag(CMD_READY_LAUNCH);
+//              }else if( command == STATUS){
+//                set_flag( CMD_STATUS );
+//              }else if( command == ,STANDDOWN){
+//                set_flag( CMD_STAND_DOWN );
+//              }else{
+//                Serial.println("Invalid message recived");
+//              }
+//              
+//            }else if( buf[2] == (uint8_t)STATE{
+//              if( buf[3] == -1){
+//                
+//              }
+//            }else if( buf[2] == (uint8_t)TEST{
+//              
+//            }else if( buf[2] == (uint8_t)ERROR{
+//              
+//            }else if( buf[2] == (uint8_t)ACKNOWLEDGE{
+//              
+//            }
+//           
+//            Serial.println("Aknowledgement Sent");
+//          }else{
+//            //sendError(rf95, selfId, reciverAddress);
+//            Serial.println("Error Sent");
+//          }
+//          digitalWrite(LED, LOW);
+//        }
+//      }else{
+//        Serial.println("No message.");
+//      }  
+//  }// Message Recived --end protocal
+//}
